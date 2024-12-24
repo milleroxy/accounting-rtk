@@ -25,16 +25,16 @@ export const registerUser = createAsyncThunk(
     }
 )
 
-
-export const fetchUser = createAsyncThunk (
-'user/fetch',
+export const fetchUser = createAsyncThunk(
+    'user/fetch',
     async (token: string) => {
-    const response = await fetch(`${base_url}/login`, {
-        method: 'POST',
-        headers: {
-            Authorization: token
-        }
-    })
+        const response = await fetch(`${base_url}/login`, {
+            method: 'Post',
+            headers: {
+                Authorization: token
+            }
+
+        })
         if (!response.ok) {
             throw new Error(`Something went wrong`)
         }
@@ -43,16 +43,17 @@ export const fetchUser = createAsyncThunk (
     }
 )
 
-export const updateUser = createAsyncThunk<UserProfile, UserData, {state: RootState}> (
+export const updateUser = createAsyncThunk<UserProfile, UserData, { state: RootState }>(
     'user/update',
-    async (user, {getState}) => {            //это store
+    async (user, {getState}) => {
         const response = await fetch(`${base_url}/user`, {
             method: 'Put',
             headers: {
-                Authorization: getState().token,                 //достали токен
+                Authorization: getState().token,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(user)
+
         })
         if (!response.ok) {
             throw new Error(`Something went wrong`)
@@ -61,7 +62,7 @@ export const updateUser = createAsyncThunk<UserProfile, UserData, {state: RootSt
     }
 )
 
-export const changePassword = createAsyncThunk<string, string[], {state: RootState} > (
+export const changePassword = createAsyncThunk<string, string[], { state: RootState }>(
     'user/password',
     async (passwords: string[], {getState}) => {
         const response = await fetch(`${base_url}/user/password`, {
@@ -69,7 +70,7 @@ export const changePassword = createAsyncThunk<string, string[], {state: RootSta
             headers: {
                 Authorization: createToken(getState().user.login, passwords[1]),
                 'X-Password': passwords[0]
-            },
+            }
         })
         if (!response.ok) {
             throw new Error(`Something went wrong`)
