@@ -66,7 +66,7 @@ export const changePassword = createAsyncThunk<string, string[], {state: RootSta
         const response = await fetch(`${base_url}/user/password`, {
             method: 'Put',
             headers: {
-                Authorization: createToken(getState().user.login.passwords[1]),
+                Authorization: createToken(getState().user.login, passwords[1]),
                 'X-Password': passwords[0]
             },
         })
