@@ -1,57 +1,66 @@
 import {useState} from "react";
-import {useAppDispatch} from "../../app/hooks.ts";
-import {changePassword} from "../../features/api/accountApi.ts";
+import {useChangePasswordMutation, useFetchUserQuery} from "../../features/api/accountApi.ts";
+import {createToken} from "../../utils/constants.ts";
+import {useAppDispatch, useAppSelector} from "../../app/hooks.ts";
+import {setToken} from "../../features/slices/tokenSlice.ts";
 
 interface Props {
     close: () => void;
 }
 
-
 const ChangePassword = ({close}: Props) => {
-    const [oldPassword, setOldPassword] = useState<string>('');
-    const [newPassword, setNewPassword] = useState<string>('');
-    const [confirmPassword, setConfirmPassword] = useState<string>('');
+    const [oldPassword, setOldPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [changePassword] = useChangePasswordMutation();
+    const token = useAppSelector(state => state.token);
+    const {data} = useFetchUserQuery(token);
     const dispatch = useAppDispatch();
 
-    const handleClickClear = () => {
-        setNewPassword('');
-        setConfirmPassword('');
-        setOldPassword('')
-    };
+    const handleClickSave = async () => {
+        if (confirmPassword === newPassword) {
+            const t = createToken(data!.login, oldPassword);
+            const {error} = await changePassword({newPassword, token: t});
+            if (!error) {
+                dispatch(setToken(createToken(data!.login, newPassword)));
+            }
 
-    const handleClickSave =() => {
 
-        if(confirmPassword === newPassword) {
-            dispatch(changePassword([newPassword, oldPassword]))
-            alert('Save new Password')
-        }
-        else{
-            alert('new password and confirm new password are different')
+        } else {
+            alert('New paswword and confirm new password are different');
         }
         close();
+    }
+
+    const handleClickClear = () => {
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
     }
 
     return (
         <>
             <label>Old password:
                 <input
-                    onChange={(e) => setOldPassword(e.target.value)}
+                    type="password"
                     value={oldPassword}
-                    type="password"/>
+                    onChange={(e) => setOldPassword(e.target.value)}
+                />
             </label>
             <label>New Password:
                 <input
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    type="password"
                     value={newPassword}
-                    type="password"/>
+                    onChange={(e) => setNewPassword(e.target.value)}
+                />
             </label>
-            <label>Confirm Password:
+            <label>Confirm Password
                 <input
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    type="password"
                     value={confirmPassword}
-                    type="Confirm password"/>
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                />
             </label>
-
             <button onClick={handleClickSave}>Save and Close</button>
             <button onClick={close}>Close without Save</button>
             <button onClick={handleClickClear}>Clear</button>

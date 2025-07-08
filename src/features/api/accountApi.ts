@@ -1,78 +1,59 @@
-import {createAsyncThunk} from "@reduxjs/toolkit";
 import {UserData, UserProfile, UserRegister} from "../../utils/types";
-import {base_url, createToken} from "../../utils/constants.ts";
+import {base_url} from "../../utils/constants.ts";
 import {RootState} from "../../app/store.ts";
+import {createApi, fetchBaseQuery} from "@reduxjs/toolkit/query/react";
 
-export const registerUser = createAsyncThunk (
-    'user/register',
-    async  (user: UserRegister) => {
-        const response = await fetch(`${base_url}/user`, {
-            method: 'Post',
-            body: JSON.stringify(user),
-            headers: {
-                'Content-Type': 'application/json'
+export const accountApi = createApi({
+    reducerPath: "account",
+    tagTypes: ['profile'],
+    baseQuery: fetchBaseQuery({
+        baseUrl: base_url,
+        prepareHeaders: (headers, {getState, endpoint}) => {
+            if (endpoint === 'updateUser') {
+                const token = (getState() as RootState).token;
+                headers.set("Authorization", token);
             }
+            return headers;
+        }
+    }),
+    endpoints: builder => ({
+        registerUser: builder.mutation<UserProfile, UserRegister>({
+            query: user => ({
+                url: '/register',
+                method: 'POST',
+                body: user
+            })
+        }),
+        fetchUser: builder.query<UserProfile, string>({
+            query: token => ({
+                url: '/login',
+                method: 'POST',
+                headers: {
+                    Authorization: token
+                }
+            }),
+            providesTags: ['profile']
+        }),
+        updateUser: builder.mutation<UserProfile, {user: UserData, login: string}>({
+            query: ({user, login}) => ({
+                url: `/user/${login}`,
+                method: 'PATCH',
+                body: user
+            }),
+            invalidatesTags: ['profile']
+        }),
+        changePassword: builder.mutation<void, { newPassword: string, token: string }>({
+            query: ({newPassword, token}) => ({
+                url: '/password',
+                method: 'PATCH',
+                headers: {
+                    'X-Password': newPassword,
+                    Authorization: token
+                }
+            }),
+            invalidatesTags: ['profile']
         })
-        if (response.status === 409) {
-            throw new Error(`user ${user.login} already exists`)
-        }
-        if (!response.ok) {
-            throw new Error(`Something went wrong`)
-        }
-        const data = await response.json();
-        const token = createToken(user.login, user.password);
-        return{token, user: data}
-    }
-)
-
-export const fetchUser = createAsyncThunk(
-'user/fetch',
-    async (token: string) => {
-    const response = await fetch(`${base_url}/login`, {
-        method: 'POST',
-        headers: {
-            Authorization: token
-        }
     })
-        if (!response.ok) {
-            throw new Error(`Something went wrong`)
-        }
-        const data = await response.json();
-        return {token, user: data}
-    }
-)
+})
 
-export const updateUser = createAsyncThunk<UserProfile, UserData, {state: RootState}> (
-    'user/update',
-    async (user, {getState}) => {            //это store
-        const response = await fetch(`${base_url}/user`, {
-            method: 'Put',
-            headers: {
-                Authorization: getState().token,                 //достали токен
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(user)
-        })
-        if (!response.ok) {
-            throw new Error(`Something went wrong`)
-        }
-        return await response.json();
-    }
-)
-
-export const changePassword = createAsyncThunk<string, string[], {state: RootState} > (
-    'user/password',
-    async (passwords: string[], {getState}) => {
-        const response = await fetch(`${base_url}/user/password`, {
-            method: 'Put',
-            headers: {
-                Authorization: createToken(getState().user.login, passwords[1]),
-                'X-Password': passwords[0]
-            },
-        })
-        if (!response.ok) {
-            throw new Error(`Something went wrong`)
-        }
-        return createToken(getState().user.login, passwords[0]);
-    }
-)
+export const {useChangePasswordMutation, useFetchUserQuery, useLazyFetchUserQuery, useUpdateUserMutation, useRegisterUserMutation} = accountApi
