@@ -1,15 +1,15 @@
-import Login from "./Login.tsx";
-import Register from "./Register.tsx";
 import {useState} from "react";
+import SignIn from "./SignIn.tsx";
+import SignUp from "./SignUp.tsx";
 
 const Guest = () => {
-    const [isLogin, setIsLogin] = useState(true)
+    const [isSignIn, setIsSignIn] = useState(true);
     return (
         <div>
-            {isLogin ? <Login/> : <Register/>}
+            {isSignIn ? <SignIn/> : <SignUp/>}
             <button
-            onClick={() => setIsLogin(prevState => !prevState)}
-            >Switch to {isLogin ? 'Register' : 'Login'}</button>
+                onClick={() => setIsSignIn(prevState => !prevState)}
+            >Switch to {isSignIn ? 'Sign up' : 'Sign in'}</button>
         </div>
     );
 };
